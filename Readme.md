@@ -1,9 +1,11 @@
-# Recorder Docker container
+# avcapture
+
+avcapture allows you to run a that captures the content and pipes the audio/video for any URL to FFmpeg for encoding including generating a live playlist.
 
 ## Build and Run
 
 - **Build**: `docker build -f ./Dockerfile -t <imagename>:<tag> .`
-- **Run**: `docker run -it --net test -v <directory to store output>:<mapped directory inside docker container> --name ffmpegchromerecorder -p 3080:8080 <imagename>:<tag>`
+- **Run**: `docker run -it --net test -v <directory to store output>:<mapped directory inside docker container> --name avcapture -p 8080:8080 <imagename>:<tag>`
 
 ## API
 
@@ -59,7 +61,8 @@
       "--enable-logging=stderr",
       "--autoplay-policy=no-user-gesture-required",
       "--no-sandbox",
-      "--start-maximized --window-position=100,300",
+      "--start-maximized",
+      "--window-position=100,300",
       "--window-size=1280,720"
     ]
   }
@@ -68,21 +71,21 @@
 
 ### stop-recording
 
-- POST: <http://IP:3080/stop_recording>
+- POST: <http://IP:8080/stop_recording>
 - No parameter is passed to this call.
 
 ## Configuration
 
-By default, the application will run server on port **8080**. If the application has to run on a different port, set the environment variable `AVCAPTURE_PORT` with the new port inside the Dockerfile before the `ENTRYPOINT`.
+By default, the application will run server on port **8080**. If the application has to run on a different port, set the environment variable `PORT` with the new port inside the Dockerfile before the `ENTRYPOINT`.
 For example:
 
 ```dockerfile
-ENV AVCAPTURE_PORT=":8080"
+ENV PORT=":8080"
 ```
 
 ## Output
 
-User is supposed to map a directory from host system to the docker image. Along with this, user has to provide the output path (as part of `/start_recording` api) which will direct the output generated the corresponding directory.
+User is supposed to map a directory from host system to the docker image. Along with this, user has to provide the output path (as part of `/start_recording` api) which will direct the output generated to the corresponding directory.
 
 ## Architecture
 
@@ -104,5 +107,5 @@ Once the `/start_recording` is received, chrome will be started to render the `u
 ## Known limitations
 
 - The solution is validated on ubuntu 16.04 (with pulseaudio v8.0). Ubuntu 18.04 contains pulseaudio 11.1 which breaks a few features. With pulseaudio 11.1,
-  - To run pulseaudio as daemon on root, `--system` has to be mentioned.
-  - User will not be able to add modules to pulseaudio.
+- To run pulseaudio as daemon on root, `--system` has to be mentioned.
+- User will not be able to add modules to pulseaudio.

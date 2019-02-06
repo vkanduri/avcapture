@@ -40,13 +40,13 @@ func init() {
 		debugArg = "debug"
 	)
 
-	pflag.String(portArg, ":8080", "Port for the HTTP listener")
-	pflag.Bool(debugArg, true, "Enable debug mode")
-	pflag.Parse()
-
 	viper.AutomaticEnv()
 	viper.BindPFlag(portArg, pflag.Lookup(portArg))
 	viper.BindPFlag(debugArg, pflag.Lookup(debugArg))
+
+	pflag.String(portArg, ":8080", "Port for the HTTP listener")
+	pflag.Bool(debugArg, false, "Enable debug mode")
+	pflag.Parse()
 }
 
 func setupAVCaptureDevices() error {

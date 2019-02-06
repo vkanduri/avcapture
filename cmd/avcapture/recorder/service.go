@@ -2,7 +2,6 @@ package recorder
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/etherlabsio/avcapture/internal/chrome"
@@ -48,7 +47,6 @@ type Service interface {
 }
 
 type service struct {
-	mtx      sync.Mutex
 	recorder *Recorder
 }
 
@@ -126,8 +124,6 @@ func (svc *service) Start(ctx context.Context, req StartRecordingRequest) (resp 
 }
 
 func (svc *service) Stop(ctx context.Context, req StopRecordingRequest) (resp StopRecordingResponse) {
-	// TODO: optimistic check and return
-
 	svc.recorder.mtx.Lock()
 	defer svc.recorder.mtx.Unlock()
 
