@@ -139,7 +139,7 @@ func (svc *service) Stop(ctx context.Context, req StopRecordingRequest) (resp St
 		Err()
 
 	if err != nil {
-		resp.Err = errors.New("avcapture: end running process error")
+		resp.Err = errors.New("avcapture: end running process error", err)
 		return resp
 	}
 

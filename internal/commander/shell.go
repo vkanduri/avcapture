@@ -50,6 +50,7 @@ func New(args ...string) *RunnableCmd {
 	return &RunnableCmd{cmd}
 }
 
+// Args returns a concatenated string args
 func (s *RunnableCmd) Args() string {
 	if s.cmd == nil {
 		return ""
@@ -57,10 +58,12 @@ func (s *RunnableCmd) Args() string {
 	return strings.Join(s.cmd.Args, " ")
 }
 
+// Start starts the command execution
 func (s *RunnableCmd) Start() error {
 	return errors.WithMessage(s.cmd.Start(), "failed to start RunnableCmd: "+s.Args())
 }
 
+// Stop terminates the command execution
 func (s *RunnableCmd) Stop() error {
 	pgid, err := syscall.Getpgid(s.cmd.Process.Pid)
 	if err != nil {
@@ -71,12 +74,21 @@ func (s *RunnableCmd) Stop() error {
 		if err := syscall.Kill(-pgid, signal); err != nil {
 			return errors.WithMessage(err, "execute-RunnableCmd: failed to terminate process group id")
 		}
-		if err := s.cmd.Wait(); err != nil {
-			return errors.WithMessage(err, "execute-RunnableCmd: failed while waiting")
+		waitErr := s.cmd.Wait()
+		err, ok := waitErr.(*exec.ExitError)
+		if ok && isSIGTERM(err) {
+			return nil
 		}
-		return nil
+		return errors.WithMessage(waitErr, "waiting for shutdown signal for cmd")
 	}
-	return stop(pgid, syscall.SIGTERM)
+
+	err = stop(pgid, syscall.SIGTERM)
+	return errors.WithMessagef(err, "stop failure: %v", s.cmd.Args)
+}
+
+func isSIGTERM(err *exec.ExitError) bool {
+	status := err.ProcessState.Sys().(syscall.WaitStatus)
+	return status.Signal() == syscall.SIGTERM
 }
 
 func buildCommand(args ...string) *exec.Cmd {
