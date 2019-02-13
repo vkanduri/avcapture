@@ -4,7 +4,7 @@ avcapture allows you to run a that captures the content and pipes the audio/vide
 
 ## Build and Run
 
-- **Build**: `docker build -f ./Dockerfile -t etherlabsio/avcapture:latest .`
+- **Build**: `make build`
 - **Run**: `docker run -it --net test -v $PWD/path/to/dir:$PWD/path/to/dir --name avcapture -p 8080:8080 etherlabsio/avcapture`
 
 ## API
