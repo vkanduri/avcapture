@@ -1,5 +1,4 @@
-## This image is assume to work on host system with ubuntu 16.04 with virtual sound card and display installed
-FROM ubuntu:16.04 as builder
+FROM ubuntu:16.04 as ffmpeg-builder
 
 RUN apt-get update && apt-get -y install   autoconf   automake   build-essential   cmake   git-core   libass-dev   libfreetype6-dev   libsdl2-dev   libtool   libva-dev   libvdpau-dev   libxcb1-dev   libxcb-shm0-dev   libxcb-xfixes0-dev   pkg-config   texinfo   wget   zlib1g-dev yasm libx264-dev
 RUN mkdir -p ~/ffmpeg_sources ~/bin
@@ -13,39 +12,38 @@ RUN cd ~/ffmpeg_sources && wget https://www.nasm.us/pub/nasm/releasebuilds/2.13.
     apt-get clean && \
     cp ffmpeg /usr/bin
 
-FROM golang AS gobuilder
+FROM golang AS go-builder
 
-# Download and install the latest release of dep
-RUN go get github.com/golang/dep/cmd/dep
+WORKDIR $GOPATH/src/app
 
-# Copy the code from the host and compile it
-WORKDIR $GOPATH/src/github.com/etherlabsio/avcapture
+# Force the go compiler to use modules
+ENV GO111MODULE=on
 
-# add Gopkg.toml and Gopkg.lock
-ADD Gopkg.toml Gopkg.toml
-ADD Gopkg.lock Gopkg.lock
+# We want to populate the module cache based on the go.{mod,sum} files.
+COPY go.mod .
+COPY go.sum .
 
-# --vendor-only is used to restrict dep from scanning source code
-# and finding dependencies
-RUN dep ensure --vendor-only -v
+# This is the ‘magic’ step that will download all the dependencies that are specified in
+# the go.mod and go.sum file.
+# Because of how the layer caching system works in Docker, the  go mod download
+# command will _ only_ be re-run when the go.mod or go.sum file change
+# (or when we add another docker instruction this line)
+RUN go mod download
 
 # ADD . . blows up the build cache. Avoid using it when possible and predictable.
 COPY cmd cmd
 COPY internal internal
+COPY pkg pkg
 
-ENV CGO_ENABLED 0
-RUN dep ensure -v -vendor-only
-RUN go build -tags debug -o /dist/server -v -i -ldflags="-s -w" ./cmd/avcapture
+RUN CGO_ENABLED=0 go build -tags debug -o /dist/avcapture-server -v -i -ldflags="-s -w" ./cmd/avcapture-server
 
 FROM ubuntu:16.04
 
-#Install ffmpeg
-RUN apt-get update && apt-get -y install  --no-install-recommends libass5   libfreetype6  libsdl2-2.0-0 libva1   libvdpau1   libxcb1   libxcb-shm0   libxcb-xfixes0   zlib1g libx264-148 libxv1 libva-drm1 libva-x11-1 libxcb-shape0 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* 
-COPY --from=builder /root/bin/ffmpeg /usr/bin/
-
 WORKDIR /app
+
+# install ffmpeg dependencies
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends libass5 libfreetype6 libsdl2-2.0-0 libva1 libvdpau1 libxcb1 libxcb-shm0 libxcb-xfixes0 zlib1g libx264-148 libxv1 libva-drm1 libva-x11-1 libxcb-shape0
 
 # Install google chrome
 RUN echo 'deb http://dl.google.com/linux/chrome/deb/ stable main' >>  /etc/apt/sources.list.d/dl_google_com_linux_chrome_deb.list && \
@@ -58,12 +56,13 @@ RUN echo 'deb http://dl.google.com/linux/chrome/deb/ stable main' >>  /etc/apt/s
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY ./run-chrome.sh run-chrome.sh
+COPY scripts/run-chrome.sh run-chrome.sh
 RUN /bin/sh run-chrome.sh
-
-COPY --from=gobuilder /dist bin/
 
 ENV DISPLAY=:99
 
+COPY --from=ffmpeg-builder /root/bin/ffmpeg /usr/bin/
+COPY --from=go-builder /dist /bin/
+
 ## Hack to remove default  browser check in chrome
-ENTRYPOINT ["bin/server"]
+ENTRYPOINT ["/bin/avcapture-server"]

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/etherlabsio/avcapture/internal/chrome"
-	"github.com/etherlabsio/avcapture/internal/commander"
-	"github.com/etherlabsio/avcapture/internal/ffmpeg"
+	"github.com/etherlabsio/avcapture/pkg/chrome"
+	"github.com/etherlabsio/avcapture/pkg/commander"
+	"github.com/etherlabsio/avcapture/pkg/ffmpeg"
 	"github.com/etherlabsio/errors"
 )
 

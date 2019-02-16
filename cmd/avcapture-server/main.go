@@ -14,11 +14,11 @@ import (
 
 	"github.com/etherlabsio/healthcheck"
 
-	"github.com/etherlabsio/avcapture/cmd/avcapture/recorder"
+	"github.com/etherlabsio/avcapture/internal/recorder"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 
-	"github.com/etherlabsio/avcapture/internal/commander"
+	"github.com/etherlabsio/avcapture/pkg/commander"
 	"github.com/etherlabsio/errors"
 	"github.com/etherlabsio/pkg/httputil"
 	"github.com/etherlabsio/pkg/logutil"
