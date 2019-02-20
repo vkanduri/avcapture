@@ -1,16 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/oklog/run"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
-
-	"github.com/oklog/run"
 
 	"github.com/etherlabsio/healthcheck"
 
@@ -101,6 +101,8 @@ func main() {
 		recorderService = recorder.ValidationMiddleware(recorderService)
 		recorderService = recorder.LoggingMiddleware(logger)(recorderService)
 	}
+
+	defer recorderService.Stop(context.Background(), recorder.StopRecordingRequest{})
 
 	httpErrorEncoder := httputil.JSONErrorEncoder(httpStatusCodeFrom)
 	httpJSONResponseEncoder := httputil.EncodeJSONResponse(httpErrorEncoder)

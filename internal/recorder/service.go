@@ -117,7 +117,7 @@ func (svc *service) Start(ctx context.Context, req StartRecordingRequest) (resp 
 		return resp
 	}
 
-	setRunState(svc.recorder, ffmpegCmd, chromeCmd)
+	setRunInfo(svc.recorder, ffmpegCmd, chromeCmd)
 
 	resp.StartTime = time.Now().UTC()
 	return resp
@@ -149,16 +149,4 @@ func (svc *service) Stop(ctx context.Context, req StopRecordingRequest) (resp St
 	resp.StopTime = stopTime
 
 	return resp
-}
-
-func cleanup(rec *Recorder) {
-	rec.Running = false
-	rec.FFmpegCmd = nil
-	rec.ChromeCmd = nil
-}
-
-func setRunState(rec *Recorder, ffmpeg, chrome Runnable) {
-	rec.ChromeCmd = chrome
-	rec.FFmpegCmd = ffmpeg
-	rec.Running = true
 }
