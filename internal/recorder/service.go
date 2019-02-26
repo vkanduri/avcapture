@@ -62,7 +62,7 @@ const (
 )
 
 func (svc *service) Start(ctx context.Context, req StartRecordingRequest) (resp StartRecordingResponse) {
-	const chromeLaunchWaitTime = 5 * time.Second
+	const chromeLaunchWaitTime = 30 * time.Second
 
 	// TODO: optimistic check and return
 
